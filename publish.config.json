@@ -1,0 +1,34 @@
+{
+  "projectPath": ".",
+  "github": {
+    "owner": "kako91",
+    "repo": "gitone",
+    "visibility": "private",
+    "description": "Project description",
+    "homepage": "",
+    "createIfMissing": true
+  },
+  "git": {
+    "defaultBranch": "main",
+    "remoteName": "origin",
+    "defaultCommitMessage": "chore: publish project",
+    "allowEmptyCommit": false,
+    "pushTags": false
+  },
+  "publish": {
+    "includeUntracked": true,
+    "autoCommit": true,
+    "forcePush": false,
+    "openAfterPublish": false
+  },
+  "safety": {
+    "requireCleanRemote": false,
+    "confirmBeforeForcePush": true,
+    "ignorePatterns": [
+      ".env",
+      "node_modules/",
+      "__pycache__/",
+      ".DS_Store"
+    ]
+  }
+}

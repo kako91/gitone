@@ -1,9 +1,8 @@
-.env
+.claude/
 node_modules/
 __pycache__/
-.DS_Store
+arc/
 
 608_one-click-git-publish_cx.md
 cx+qw
-publish_dev.md.claude/
-arc/
+publish_dev.md

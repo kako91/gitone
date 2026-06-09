@@ -25,10 +25,10 @@
     "requireCleanRemote": false,
     "confirmBeforeForcePush": true,
     "ignorePatterns": [
-      ".env",
+      ".claude/",
       "node_modules/",
       "__pycache__/",
-      ".DS_Store"
+      "arc/"
     ]
   }
 }

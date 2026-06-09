@@ -11,7 +11,6 @@ import subprocess
 import sys
 import webbrowser
 from pathlib import Path
-import pdb
 
 # ─── 网络错误关键词 ───────────────────────────────────────────────
 NETWORK_ERROR_KEYWORDS = [
@@ -55,9 +54,10 @@ DEFAULT_CONFIG = {
         "requireCleanRemote": False,
         "confirmBeforeForcePush": True,
         "ignorePatterns": [
-            ".env",
+            ".claude/",
             "node_modules/",
             "__pycache__/",
+            "arc/"
         ]
     }
 }

@@ -17,6 +17,7 @@
   },
   "publish": {
     "includeUntracked": true,
+    "includePatterns": [],
     "autoCommit": true,
     "forcePush": false,
     "openAfterPublish": false
@@ -28,7 +29,9 @@
       ".claude/",
       "node_modules/",
       "__pycache__/",
-      "arc/"
+      "0push.bat",
+      "publish_dev.md",
+      ".env"
     ]
   }
 }

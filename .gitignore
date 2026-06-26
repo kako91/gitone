@@ -2,7 +2,5 @@
 node_modules/
 __pycache__/
 arc/
-
-608_one-click-git-publish_cx.md
-cx+qw
-publish_dev.md
+0push.bat
+.env

@@ -46,6 +46,7 @@ DEFAULT_CONFIG = {
     },
     "publish": {
         "includeUntracked": True,
+        "includePatterns": [],
         "autoCommit": True,
         "forcePush": False,
         "openAfterPublish": False,
@@ -57,7 +58,8 @@ DEFAULT_CONFIG = {
             ".claude/",
             "node_modules/",
             "__pycache__/",
-            "arc/"
+            "0push.bat",
+            ".env"
         ]
     }
 }
@@ -112,7 +114,18 @@ def fail(msg: str, code: int = 1):
 
 
 # ─── 配置读取 ─────────────────────────────────────────────────────
+def missing_required_config_fields(config: dict) -> list[str]:
+    required = [
+        ("github.owner", config["github"]["owner"]),
+        ("github.repo", config["github"]["repo"]),
+    ]
+    return [name for name, val in required if not val]
+
+
 def load_config(config_path: str) -> dict:
+    if not missing_required_config_fields(DEFAULT_CONFIG):
+        return DEFAULT_CONFIG
+
     path = Path(config_path)
     if not path.exists():
         #fail(f"配置文件不存在：{path.absolute()}\n请在项目根目录创建 publish.config.json")
@@ -130,11 +143,7 @@ def load_config(config_path: str) -> dict:
 
 
 def validate_config(config: dict):
-    required = [
-        ("github.owner", config["github"]["owner"]),
-        ("github.repo", config["github"]["repo"]),
-    ]
-    missing = [name for name, val in required if not val]
+    missing = missing_required_config_fields(config)
     if missing:
         fail(f"配置文件缺少必填字段：{', '.join(missing)}")
 
@@ -370,16 +379,22 @@ def check_network(project_path: str, remote_name: str, dry_run: bool, verbose: b
 
 
 # ─── Add / Commit / Push ─────────────────────────────────────────
-def git_add_and_commit(project_path: str, config: dict, commit_message: str,
-                       dry_run: bool, verbose: bool) -> bool:
-    """执行 add + commit，返回是否有提交发生"""
-    if not config["publish"]["autoCommit"]:
-        if dry_run:
-            print("[dry-run] autoCommit 为 false，将跳过 add/commit")
-        return False
+def git_add_publish_targets(project_path: str, config: dict, dry_run: bool, verbose: bool):
+    include_patterns = config["publish"].get("includePatterns", [])
+    include_untracked = config["publish"]["includeUntracked"]
 
-    # git add
-    if config["publish"]["includeUntracked"]:
+    if include_patterns:
+        cmd = ["git", "add"]
+        if not include_untracked:
+            cmd.append("-u")
+        cmd.extend(["--", *include_patterns])
+        if dry_run:
+            print(f"[dry-run] 将按白名单执行: {' '.join(cmd)}")
+        else:
+            run_cmd(cmd, cwd=project_path, verbose=verbose)
+        return
+
+    if include_untracked:
         if dry_run:
             print("[dry-run] 将执行: git add .")
         else:
@@ -389,6 +404,34 @@ def git_add_and_commit(project_path: str, config: dict, commit_message: str,
             print("[dry-run] 将执行: git add -u")
         else:
             run_cmd(["git", "add", "-u"], cwd=project_path, verbose=verbose)
+
+
+def git_unstage_ignored_targets(project_path: str, patterns: list[str], dry_run: bool, verbose: bool):
+    if not patterns:
+        return
+
+    cmd = ["git", "reset", "-q", "--", *patterns]
+    if dry_run:
+        print(f"[dry-run] 将按黑名单取消暂存: {' '.join(cmd)}")
+        return
+
+    for pattern in patterns:
+        result = run_cmd(["git", "reset", "-q", "--", pattern],
+                         cwd=project_path, verbose=verbose, check=False)
+        if result and result.returncode != 0 and verbose:
+            print(f"  忽略规则未匹配，已跳过：{pattern}")
+
+
+def git_add_and_commit(project_path: str, config: dict, commit_message: str,
+                       dry_run: bool, verbose: bool) -> bool:
+    """执行 add + commit，返回是否有提交发生"""
+    if not config["publish"]["autoCommit"]:
+        if dry_run:
+            print("[dry-run] autoCommit 为 false，将跳过 add/commit")
+        return False
+
+    git_add_publish_targets(project_path, config, dry_run, verbose)
+    git_unstage_ignored_targets(project_path, config["safety"]["ignorePatterns"], dry_run, verbose)
 
     # 检查是否有变更
     if dry_run:
@@ -539,7 +582,7 @@ def main():
 
     # 读取配置
     if dry_run:
-        print(f"[dry-run] 读取配置 {config_path}")
+        print(f"[dry-run] 解析配置，默认配置不完整时读取 {config_path}")
     config = load_config(config_path)
     validate_config(config)
     project_path = resolve_project_path(config["projectPath"], base_dir=base_dir)

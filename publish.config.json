@@ -30,7 +30,6 @@
       "node_modules/",
       "__pycache__/",
       "0push.bat",
-      "publish_dev.md",
       ".env"
     ]
   }

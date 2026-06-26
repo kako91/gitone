@@ -4,3 +4,4 @@ __pycache__/
 arc/
 0push.bat
 .env
+*.zip
